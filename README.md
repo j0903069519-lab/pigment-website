@@ -26,6 +26,12 @@
 
 ## 本機測試
 
+正式公開網址：
+
+```text
+https://j0903069519-lab.github.io/pigment-website/
+```
+
 在此資料夾中啟動：
 
 ```sh

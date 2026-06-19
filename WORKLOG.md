@@ -74,6 +74,17 @@
 - 將正式網站檔案、商品資料、原始合照、裁切商品照、原始 Excel 備份轉移到新專案。
 - 將先前檢查照片時產生的暫存縮圖與檢查頁移到 `_scratch/`。
 
+### 正式網站發布
+
+- 建立 GitHub repository：`j0903069519-lab/pigment-website`。
+- 啟用 GitHub Pages，來源為 `main` 分支根目錄。
+- 正式網址：
+  - `https://j0903069519-lab.github.io/pigment-website/`
+- 發布時排除：
+  - `_scratch/`
+  - `source-data/`
+- 確認正式網址、`data/pigments.json` 均回應 `200 OK`。
+
 ## 後續待辦
 
 - 補拍所有顏料的單包照片。
