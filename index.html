@@ -19,6 +19,40 @@
         </div>
       </header>
 
+      <aside class="checkout-panel checkout-panel--top" aria-label="訂單與收件資料">
+        <div class="checkout-summary">
+          <div class="panel-heading compact">
+            <div>
+              <h2>訂單</h2>
+              <p id="cartSummary">尚未選擇顏料</p>
+            </div>
+            <button id="clearCart" class="ghost-button" type="button">清空</button>
+          </div>
+
+          <div id="cartItems" class="cart-items empty">選好顏料後會顯示在這裡</div>
+        </div>
+
+        <form id="orderForm" class="order-form">
+          <label>
+            <span>收件人</span>
+            <input name="recipient" autocomplete="name" required>
+          </label>
+          <label>
+            <span>電話</span>
+            <input name="phone" autocomplete="tel" inputmode="tel" required>
+          </label>
+          <label class="wide-field">
+            <span>收件地址</span>
+            <textarea name="address" rows="2" autocomplete="street-address" required></textarea>
+          </label>
+          <label class="wide-field">
+            <span>備註</span>
+            <textarea name="note" rows="2" placeholder="可填希望出貨時間、替代色等"></textarea>
+          </label>
+          <button class="primary-button" type="submit">產生訂單文字</button>
+        </form>
+      </aside>
+
       <section class="order-layout">
         <aside class="filters" aria-label="顏料篩選">
           <label class="field-label" for="searchInput">搜尋名稱或色號</label>
@@ -41,40 +75,10 @@
             </div>
             <button id="clearFilters" class="ghost-button" type="button">清除篩選</button>
           </div>
+          <div id="paginationTop" class="pagination" aria-label="商品分頁"></div>
           <div id="productGrid" class="product-grid"></div>
+          <div id="paginationBottom" class="pagination pagination--bottom" aria-label="商品分頁"></div>
         </section>
-
-        <aside class="checkout-panel" aria-label="訂單與收件資料">
-          <div class="panel-heading compact">
-            <div>
-              <h2>訂單</h2>
-              <p id="cartSummary">尚未選擇顏料</p>
-            </div>
-            <button id="clearCart" class="ghost-button" type="button">清空</button>
-          </div>
-
-          <div id="cartItems" class="cart-items empty">選好顏料後會顯示在這裡</div>
-
-          <form id="orderForm" class="order-form">
-            <label>
-              <span>收件人</span>
-              <input name="recipient" autocomplete="name" required>
-            </label>
-            <label>
-              <span>電話</span>
-              <input name="phone" autocomplete="tel" inputmode="tel" required>
-            </label>
-            <label>
-              <span>收件地址</span>
-              <textarea name="address" rows="3" autocomplete="street-address" required></textarea>
-            </label>
-            <label>
-              <span>備註</span>
-              <textarea name="note" rows="2" placeholder="可填希望出貨時間、替代色等"></textarea>
-            </label>
-            <button class="primary-button" type="submit">產生訂單文字</button>
-          </form>
-        </aside>
       </section>
     </main>
 

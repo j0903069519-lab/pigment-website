@@ -100,7 +100,7 @@ h2 {
 
 .order-layout {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr) 360px;
+  grid-template-columns: 250px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -126,9 +126,20 @@ h2 {
   padding: 18px;
 }
 
-.checkout-panel {
+.checkout-panel:not(.checkout-panel--top) {
   position: sticky;
   top: 16px;
+}
+
+.checkout-panel--top {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.checkout-summary {
+  min-width: 0;
 }
 
 .field-label,
@@ -254,6 +265,38 @@ label span {
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 10px;
   min-width: 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pagination--bottom {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.page-button {
+  min-width: 42px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--accent-dark);
+  background: #fff;
+  font-weight: 900;
+}
+
+.page-button.active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .product-card {
@@ -389,12 +432,17 @@ label span {
 
 .order-form {
   display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: end;
   gap: 12px;
-  margin-top: 16px;
 }
 
 .order-form label {
   display: block;
+}
+
+.wide-field {
+  grid-column: span 2;
 }
 
 .order-form input,
@@ -462,9 +510,16 @@ dialog::backdrop {
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
-  .checkout-panel {
-    grid-column: 1 / -1;
-    position: static;
+  .checkout-panel--top {
+    grid-template-columns: 1fr;
+  }
+
+  .order-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wide-field {
+    grid-column: span 1;
   }
 
   .cart-items {
@@ -506,6 +561,10 @@ dialog::backdrop {
   }
 
   .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-form {
     grid-template-columns: 1fr;
   }
 }

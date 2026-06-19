@@ -3,7 +3,10 @@ const state = {
   query: "",
   color: "全部",
   cart: new Map(),
+  currentPage: 1,
 };
+
+const MAX_PAGES = 5;
 
 const colorStyles = {
   紅: "#cf4c43",
@@ -46,6 +49,8 @@ const els = {
   colorFilters: document.querySelector("#colorFilters"),
   clearFilters: document.querySelector("#clearFilters"),
   productGrid: document.querySelector("#productGrid"),
+  paginationTop: document.querySelector("#paginationTop"),
+  paginationBottom: document.querySelector("#paginationBottom"),
   resultSummary: document.querySelector("#resultSummary"),
   cartSummary: document.querySelector("#cartSummary"),
   cartItems: document.querySelector("#cartItems"),
@@ -76,12 +81,14 @@ async function init() {
 function bindEvents() {
   els.searchInput.addEventListener("input", (event) => {
     state.query = event.target.value.trim().toLowerCase();
+    state.currentPage = 1;
     renderProducts();
   });
 
   els.clearFilters.addEventListener("click", () => {
     state.query = "";
     state.color = "全部";
+    state.currentPage = 1;
     els.searchInput.value = "";
     render();
   });
@@ -99,12 +106,23 @@ function bindEvents() {
     const qty = state.cart.get(id) || 0;
     if (button.dataset.action === "increase") {
       state.cart.set(id, qty + 1);
+      state.currentPage = 1;
     }
     if (button.dataset.action === "decrease") {
       if (qty <= 1) state.cart.delete(id);
       else state.cart.set(id, qty - 1);
+      state.currentPage = 1;
     }
     render();
+  });
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-page]");
+    if (!button) return;
+
+    state.currentPage = Number(button.dataset.page);
+    renderProducts();
+    document.querySelector(".catalog-panel").scrollIntoView({ block: "start", behavior: "smooth" });
   });
 
   els.orderForm.addEventListener("submit", (event) => {
@@ -154,6 +172,7 @@ function buildFilters() {
     const button = event.target.closest("[data-color]");
     if (!button) return;
     state.color = button.dataset.color;
+    state.currentPage = 1;
     render();
   });
 }
@@ -172,20 +191,68 @@ function renderFilterState() {
 }
 
 function getFilteredProducts() {
-  return state.products.filter((product) => {
+  const filtered = state.products.filter((product) => {
     const matchesColor = state.color === "全部" || product.color === state.color;
     const haystack = `${product.name} ${product.code} ${product.color}`.toLowerCase();
     return matchesColor && haystack.includes(state.query);
+  });
+
+  return filtered.sort((a, b) => {
+    const aSelected = state.cart.has(a.id);
+    const bSelected = state.cart.has(b.id);
+    return Number(bSelected) - Number(aSelected)
+      || Number(hasPhoto(b)) - Number(hasPhoto(a))
+      || productSort(a, b);
   });
 }
 
 function renderProducts() {
   const products = getFilteredProducts();
-  els.resultSummary.textContent = `顯示 ${products.length} 款，可直接按 + 加入訂單`;
-  els.productGrid.innerHTML = products.length
-    ? products.map(productCard).join("")
+  const pageInfo = getPageInfo(products.length);
+  const pageProducts = products.slice(pageInfo.start, pageInfo.end);
+  const selectedVisible = products.filter((product) => state.cart.has(product.id)).length;
+  const selectedText = selectedVisible ? `，已選品項置頂 ${selectedVisible} 款` : "";
+  els.resultSummary.textContent = products.length
+    ? `顯示 ${products.length} 款，第 ${pageInfo.currentPage} / ${pageInfo.totalPages} 頁${selectedText}`
+    : "找不到符合條件的顏料";
+  els.productGrid.innerHTML = pageProducts.length
+    ? pageProducts.map(productCard).join("")
     : `<div class="empty-state">找不到符合條件的顏料</div>`;
+  renderPagination(pageInfo);
   renderFilterState();
+}
+
+function getPageInfo(totalItems) {
+  if (totalItems === 0) {
+    state.currentPage = 1;
+    return { currentPage: 1, totalPages: 1, start: 0, end: 0 };
+  }
+
+  const pageSize = Math.max(1, Math.ceil(state.products.length / MAX_PAGES));
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  state.currentPage = Math.min(Math.max(1, state.currentPage), totalPages);
+  const start = (state.currentPage - 1) * pageSize;
+  return {
+    currentPage: state.currentPage,
+    totalPages,
+    start,
+    end: start + pageSize,
+  };
+}
+
+function renderPagination({ currentPage, totalPages }) {
+  const controls = totalPages <= 1
+    ? ""
+    : Array.from({ length: totalPages }, (_, index) => {
+      const page = index + 1;
+      const active = page === currentPage ? " active" : "";
+      return `<button class="page-button${active}" type="button" data-page="${page}">${page}</button>`;
+    }).join("");
+  const html = controls
+    ? `<span>頁面</span>${controls}`
+    : "";
+  els.paginationTop.innerHTML = html;
+  els.paginationBottom.innerHTML = html;
 }
 
 function productCard(product) {
@@ -283,6 +350,13 @@ function escapeHtml(value) {
 
 function hasPhoto(product) {
   return Boolean(productPhotos[product.id]);
+}
+
+function productSort(a, b) {
+  const colorOrder = Object.keys(colorStyles);
+  return colorOrder.indexOf(a.color) - colorOrder.indexOf(b.color)
+    || a.name.localeCompare(b.name, "zh-Hant")
+    || a.code.localeCompare(b.code, "zh-Hant");
 }
 
 init().catch((error) => {
