@@ -4,6 +4,7 @@ const state = {
   color: "全部",
   cart: new Map(),
   currentPage: 1,
+  activeSelectionId: null,
 };
 
 const MAX_PAGES = 5;
@@ -95,6 +96,7 @@ function bindEvents() {
 
   els.clearCart.addEventListener("click", () => {
     state.cart.clear();
+    state.activeSelectionId = null;
     render();
   });
 
@@ -106,12 +108,12 @@ function bindEvents() {
     const qty = state.cart.get(id) || 0;
     if (button.dataset.action === "increase") {
       state.cart.set(id, qty + 1);
-      state.currentPage = 1;
+      state.activeSelectionId = id;
     }
     if (button.dataset.action === "decrease") {
       if (qty <= 1) state.cart.delete(id);
       else state.cart.set(id, qty - 1);
-      state.currentPage = 1;
+      state.activeSelectionId = state.cart.has(id) ? id : null;
     }
     render();
   });
@@ -198,9 +200,9 @@ function getFilteredProducts() {
   });
 
   return filtered.sort((a, b) => {
-    const aSelected = state.cart.has(a.id);
-    const bSelected = state.cart.has(b.id);
-    return Number(bSelected) - Number(aSelected)
+    const aPinned = isPinnedSelection(a);
+    const bPinned = isPinnedSelection(b);
+    return Number(bPinned) - Number(aPinned)
       || Number(hasPhoto(b)) - Number(hasPhoto(a))
       || productSort(a, b);
   });
@@ -210,8 +212,8 @@ function renderProducts() {
   const products = getFilteredProducts();
   const pageInfo = getPageInfo(products.length);
   const pageProducts = products.slice(pageInfo.start, pageInfo.end);
-  const selectedVisible = products.filter((product) => state.cart.has(product.id)).length;
-  const selectedText = selectedVisible ? `，已選品項置頂 ${selectedVisible} 款` : "";
+  const pinnedVisible = products.filter(isPinnedSelection).length;
+  const selectedText = pinnedVisible ? `，已選品項置頂 ${pinnedVisible} 款` : "";
   els.resultSummary.textContent = products.length
     ? `顯示 ${products.length} 款，第 ${pageInfo.currentPage} / ${pageInfo.totalPages} 頁${selectedText}`
     : "找不到符合條件的顏料";
@@ -350,6 +352,10 @@ function escapeHtml(value) {
 
 function hasPhoto(product) {
   return Boolean(productPhotos[product.id]);
+}
+
+function isPinnedSelection(product) {
+  return state.cart.has(product.id) && product.id !== state.activeSelectionId;
 }
 
 function productSort(a, b) {
