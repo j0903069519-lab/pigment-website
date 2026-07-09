@@ -8,7 +8,6 @@ const state = {
 };
 
 const MAX_PAGES = 5;
-const UNIT_PRICE = 100;
 
 const colorStyles = {
   紅: "#cf4c43",
@@ -263,6 +262,8 @@ function productCard(product) {
   const selected = qty > 0 ? " selected" : "";
   const swatch = colorStyles[product.color] || "#ddd";
   const photo = productPhotos[product.id];
+  const price = getProductPrice(product);
+  const weight = getProductWeight(product);
   const visual = photo
     ? `<img class="product-photo" src="${photo}" alt="${escapeHtml(product.name)} 色號 ${escapeHtml(product.code)}">`
     : `<span class="swatch" style="background:${swatch}"></span>`;
@@ -275,7 +276,7 @@ function productCard(product) {
       <div>
         <div class="product-name">${escapeHtml(product.name)}</div>
         <div class="product-meta">${escapeHtml(product.color)}色系</div>
-        <div class="product-price">每包 $${UNIT_PRICE}</div>
+        <div class="product-price">每包 $${price} / ${escapeHtml(weight)}</div>
       </div>
       <div class="stepper" aria-label="${escapeHtml(product.name)} 數量">
         <button type="button" data-action="decrease" data-id="${product.id}" aria-label="減少">−</button>
@@ -311,7 +312,7 @@ function renderCart() {
     <div class="cart-item">
       <div>
         <strong>${escapeHtml(product.name)}</strong>
-        <small>${escapeHtml(product.color)}色系 / 色號 ${escapeHtml(product.code)}</small>
+        <small>${escapeHtml(product.color)}色系 / 色號 ${escapeHtml(product.code)} / ${escapeHtml(getProductWeight(product))}</small>
       </div>
       <div class="cart-qty">${qty}</div>
     </div>
@@ -330,9 +331,10 @@ function getCartItems() {
 
 function getOrderTotals(items = getCartItems()) {
   const paidQty = items.reduce((sum, item) => sum + item.qty, 0);
+  const totalPrice = items.reduce((sum, item) => sum + (getProductPrice(item.product) * item.qty), 0);
   return {
     paidQty,
-    totalPrice: paidQty * UNIT_PRICE,
+    totalPrice,
   };
 }
 
@@ -342,7 +344,7 @@ function buildOrderText(formData) {
   const items = getCartItems();
   const totals = getOrderTotals(items);
   const lines = items.map(({ product, qty }, index) => {
-    return `${index + 1}. ${product.name}（${product.color} / 色號 ${product.code}） x ${qty} 包`;
+    return `${index + 1}. ${product.name}（${product.color} / 色號 ${product.code} / ${getProductWeight(product)} / 每包 $${getProductPrice(product)}） x ${qty} 包`;
   });
 
   return [
@@ -352,7 +354,6 @@ function buildOrderText(formData) {
     "商品：",
     ...lines,
     "",
-    `單價：每包 $${UNIT_PRICE}`,
     `總包數：${totals.paidQty} 包`,
     `應付金額：$${totals.totalPrice}`,
     "",
@@ -361,6 +362,14 @@ function buildOrderText(formData) {
     `地址：${formData.get("address")}`,
     `備註：${formData.get("note") || "無"}`,
   ].join("\n");
+}
+
+function getProductPrice(product) {
+  return Number(product.price) || 0;
+}
+
+function getProductWeight(product) {
+  return product.weight || "";
 }
 
 function escapeHtml(value) {

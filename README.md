@@ -7,7 +7,7 @@
 - `index.html`：網站主頁
 - `styles.css`：平板優先的版面與商品卡樣式
 - `app.js`：搜尋、色系篩選、數量選擇、訂單文字產生
-- `data/pigments.json`：由 `顏料.xlsx` 轉出的 251 筆顏料資料
+- `data/pigments.json`：由 `顏料.xlsx` 轉出的 251 筆顏料資料，包含色系、名稱、色號、價格、重量
 - `assets/pigment-photos/`：手機上傳的原始顏料合照
 - `assets/product-photos/`：從合照裁出的單一顏料商品照
 - `source-data/顏料.xlsx`：原始 Excel 商品清單備份
@@ -16,6 +16,7 @@
 ## 目前功能
 
 - 顯示 251 款顏料
+- 顯示每包價格與重量
 - 搜尋顏料名稱、色號、色系
 - 依色系篩選
 - 使用加減按鈕選擇數量
