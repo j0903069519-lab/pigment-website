@@ -5,6 +5,8 @@ const state = {
   cart: new Map(),
   currentPage: 1,
   activeSelectionId: null,
+  lineProfile: null,
+  lineLiffId: "",
 };
 
 const MAX_PAGES = 5;
@@ -61,9 +63,12 @@ const els = {
   orderText: document.querySelector("#orderText"),
   copyOrder: document.querySelector("#copyOrder"),
   closeDialog: document.querySelector("#closeDialog"),
+  submitOrder: document.querySelector("#submitOrder"),
+  dialogStatus: document.querySelector("#dialogStatus"),
 };
 
 async function init() {
+  await initLine();
   const response = await fetch("data/pigments.json");
   state.products = await response.json();
   state.products.sort((a, b) => {
@@ -133,9 +138,7 @@ function bindEvents() {
       alert("請先選擇至少一款顏料");
       return;
     }
-    const formData = new FormData(els.orderForm);
-    els.orderText.value = buildOrderText(formData);
-    els.orderDialog.showModal();
+    submitOrder();
   });
 
   els.copyOrder.addEventListener("click", async () => {
@@ -145,6 +148,26 @@ function bindEvents() {
       els.copyOrder.textContent = "複製文字";
     }, 1200);
   });
+}
+
+async function initLine() {
+  try {
+    const response = await fetch("/api/config");
+    if (response.ok) {
+      const config = await response.json();
+      state.lineLiffId = config.lineLiffId || "";
+    }
+    if (state.lineLiffId && window.liff) {
+      await liff.init({ liffId: state.lineLiffId });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+      state.lineProfile = await liff.getProfile();
+    }
+  } catch (error) {
+    console.info("LINE LIFF 尚未啟用，使用一般網頁模式。", error);
+  }
 }
 
 function buildFilters() {
@@ -329,6 +352,59 @@ function getCartItems() {
     .filter((item) => item.product);
 }
 
+async function submitOrder() {
+  const formData = new FormData(els.orderForm);
+  const fallbackText = buildOrderText(formData);
+  els.submitOrder.disabled = true;
+  els.submitOrder.textContent = "送出中";
+
+  try {
+    const response = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildOrderPayload(formData)),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "訂單送出失敗");
+    }
+
+    els.dialogStatus.textContent = result.paymentUrl
+      ? "訂單已建立，準備前往 LINE Pay"
+      : "訂單已建立，LINE Pay 尚未設定";
+    els.orderText.value = buildSubmittedOrderText(result.order);
+    els.orderDialog.showModal();
+
+    if (result.paymentUrl) {
+      window.setTimeout(() => {
+        window.location.href = result.paymentUrl;
+      }, 900);
+    }
+  } catch (error) {
+    els.dialogStatus.textContent = "後端尚未連線，先保留訂單文字";
+    els.orderText.value = `${fallbackText}\n\n送出狀態：${error.message}`;
+    els.orderDialog.showModal();
+  } finally {
+    els.submitOrder.disabled = false;
+    els.submitOrder.textContent = "送出訂單並付款";
+  }
+}
+
+function buildOrderPayload(formData) {
+  return {
+    lineUserId: state.lineProfile?.userId || "",
+    lineDisplayName: state.lineProfile?.displayName || "",
+    recipient: formData.get("recipient"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+    note: formData.get("note") || "",
+    items: getCartItems().map(({ product, qty }) => ({
+      id: product.id,
+      qty,
+    })),
+  };
+}
+
 function getOrderTotals(items = getCartItems()) {
   const paidQty = items.reduce((sum, item) => sum + item.qty, 0);
   const totalPrice = items.reduce((sum, item) => sum + (getProductPrice(item.product) * item.qty), 0);
@@ -361,6 +437,33 @@ function buildOrderText(formData) {
     `電話：${formData.get("phone")}`,
     `地址：${formData.get("address")}`,
     `備註：${formData.get("note") || "無"}`,
+  ].join("\n");
+}
+
+function buildSubmittedOrderText(order) {
+  return lineBotOrderText(order, "訂單已建立");
+}
+
+function lineBotOrderText(order, heading) {
+  const lines = order.items.map(({ product, qty }, index) => {
+    return `${index + 1}. ${product.name}（${product.color} / 色號 ${product.code} / ${product.weight} / 每包 $${product.price}） x ${qty} 包`;
+  });
+
+  return [
+    "稻花香顏料訂單",
+    heading,
+    `訂單編號：${order.id}`,
+    "",
+    "商品：",
+    ...lines,
+    "",
+    `總包數：${order.totalQty} 包`,
+    `應付金額：$${order.totalPrice}`,
+    "",
+    `收件人：${order.recipient}`,
+    `電話：${order.phone}`,
+    `地址：${order.address}`,
+    `備註：${order.note || "無"}`,
   ].join("\n");
 }
 

@@ -39,6 +39,31 @@ https://j0903069519-lab.github.io/pigment-website/
 python3 -m http.server 5173 --bind 0.0.0.0
 ```
 
+LINE 內商店後端啟動：
+
+```sh
+python3 -m server.app
+```
+
+後端本機網址：
+
+```text
+http://127.0.0.1:8787/
+```
+
+## LINE 內商店
+
+專案已加入 LINE 官方帳號、LIFF、LINE Pay 串接用的後端骨架：
+
+- `server/app.py`：網站與 API 後端
+- `server/db.py`：SQLite 訂單資料庫
+- `server/line_bot.py`：LINE 機器人回覆與通知
+- `server/line_pay.py`：LINE Pay 建立付款與確認付款
+- `.env.example`：正式環境設定範本
+- `docs/line-commerce-setup.md`：LINE 官方帳號、LIFF、LINE Pay 設定步驟
+
+正式上線時需將網站部署到可公開存取的後端網址，再把該網址填入 LINE Developers 與 LINE Pay 設定。
+
 同一個 Wi-Fi 內可用：
 
 ```text

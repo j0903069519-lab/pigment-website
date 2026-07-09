@@ -1,3 +1,7 @@
 _scratch/
 source-data/
 .DS_Store
+.env
+server/*.sqlite3
+server/__pycache__/
+.pycache-check/
