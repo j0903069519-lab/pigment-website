@@ -358,6 +358,13 @@ label span {
   font-size: 14px;
 }
 
+.product-price {
+  margin-top: 6px;
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 900;
+}
+
 .stepper {
   display: grid;
   grid-template-columns: 42px 1fr 42px;
@@ -408,6 +415,23 @@ label span {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+.cart-total {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px;
+  color: var(--accent-dark);
+  background: #eef5ee;
+  border: 1px solid rgba(50, 111, 96, 0.22);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.cart-total strong {
+  text-align: right;
 }
 
 .cart-item strong {
