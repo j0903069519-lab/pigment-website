@@ -221,7 +221,9 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-def run(port=8787):
+def run(port=None):
+    if port is None:
+        port = int(__import__("os").getenv("PORT", "8787"))
     db.connect().close()
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"稻花香 LINE 商店後端：http://127.0.0.1:{port}")
@@ -230,4 +232,3 @@ def run(port=8787):
 
 if __name__ == "__main__":
     run()
-
