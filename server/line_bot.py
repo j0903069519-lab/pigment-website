@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import struct
 import urllib.request
 import zlib
@@ -11,6 +12,7 @@ LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push"
 LINE_RICH_MENU_URL = "https://api.line.me/v2/bot/richmenu"
 LINE_RICH_MENU_DEFAULT_URL = "https://api.line.me/v2/bot/user/all/richmenu"
 LINE_DATA_URL = "https://api-data.line.me/v2/bot/richmenu"
+RICH_MENU_IMAGE_PATH = Path(__file__).resolve().parents[1] / "assets" / "line-rich-menu.png"
 
 
 def is_enabled():
@@ -132,12 +134,15 @@ def delete_existing_rich_menus(name):
 
 
 def build_rich_menu_image():
+    if RICH_MENU_IMAGE_PATH.exists():
+        return RICH_MENU_IMAGE_PATH.read_bytes()
+
     width = 2500
     height = 843
     sections = [
-        ((246, 250, 246), (50, 111, 96), "SHOP", "Order pigments"),
-        ((255, 253, 248), (200, 95, 59), "HELP", "Talk to us"),
-        ((244, 239, 227), (66, 111, 159), "INFO", "Payment & shipping"),
+        ((247, 251, 248), (45, 111, 92), "BUY", "ORDER"),
+        ((255, 252, 246), (202, 92, 56), "CHAT", "HELP"),
+        ((245, 240, 229), (66, 111, 159), "PAY", "INFO"),
     ]
     pixels = bytearray()
     for y in range(height):
@@ -149,19 +154,28 @@ def build_rich_menu_image():
             local_x = x - section_index * (width // 3)
             if y < 18 or y > height - 18 or local_x < 18 or local_x > (width // 3) - 18:
                 color = accent
+            elif y < 150:
+                color = blend(background, accent, 0.12)
             row.extend(color)
         pixels.extend(b"\x00" + row)
 
     for index, (_, accent, title, subtitle) in enumerate(sections):
         center_x = int((index + 0.5) * width / 3)
-        draw_text(pixels, width, height, center_x - len(title) * 28, 300, title, accent, scale=9)
-        draw_text(pixels, width, height, center_x - len(subtitle) * 12, 455, subtitle, (60, 60, 60), scale=4)
+        draw_badge(pixels, width, height, center_x, 230, accent)
+        draw_centered_text(pixels, width, height, center_x, 355, title, accent, scale=13)
+        draw_centered_text(pixels, width, height, center_x, 540, subtitle, (58, 58, 58), scale=6)
 
     return encode_png(width, height, bytes(pixels))
 
 
+def blend(color, accent, amount):
+    return tuple(int(color[index] * (1 - amount) + accent[index] * amount) for index in range(3))
+
+
 FONT = {
     "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
+    "B": ("11110", "10001", "10001", "11110", "10001", "10001", "11110"),
+    "C": ("01111", "10000", "10000", "10000", "10000", "10000", "01111"),
     "D": ("11110", "10001", "10001", "10001", "10001", "10001", "11110"),
     "E": ("11111", "10000", "10000", "11110", "10000", "10000", "11111"),
     "F": ("11111", "10000", "10000", "11110", "10000", "10000", "10000"),
@@ -176,10 +190,25 @@ FONT = {
     "R": ("11110", "10001", "10001", "11110", "10100", "10010", "10001"),
     "S": ("01111", "10000", "10000", "01110", "00001", "00001", "11110"),
     "T": ("11111", "00100", "00100", "00100", "00100", "00100", "00100"),
+    "U": ("10001", "10001", "10001", "10001", "10001", "10001", "01110"),
     "Y": ("10001", "10001", "01010", "00100", "00100", "00100", "00100"),
     "&": ("01100", "10010", "10100", "01000", "10101", "10010", "01101"),
     " ": ("00000", "00000", "00000", "00000", "00000", "00000", "00000"),
 }
+
+
+def draw_badge(pixels, width, height, center_x, center_y, color):
+    fill_rect(pixels, width, height, center_x - 86, center_y - 86, 172, 172, blend((255, 255, 255), color, 0.18))
+    fill_rect(pixels, width, height, center_x - 62, center_y - 62, 124, 124, color)
+    fill_rect(pixels, width, height, center_x - 30, center_y - 30, 60, 60, (255, 255, 255))
+
+
+def text_width(text, scale):
+    return len(text) * 6 * scale
+
+
+def draw_centered_text(pixels, width, height, center_x, y, text, color, scale=4):
+    draw_text(pixels, width, height, center_x - text_width(text, scale) // 2, y, text, color, scale)
 
 
 def draw_text(pixels, width, height, x, y, text, color, scale=4):
