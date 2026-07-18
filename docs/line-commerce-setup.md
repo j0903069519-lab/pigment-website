@@ -27,6 +27,28 @@ LINE_CHANNEL_ACCESS_TOKEN=
 LINE_CHANNEL_SECRET=
 ```
 
+## LINE 底部選單
+
+網站後台可以自動建立官方帳號的 Rich Menu，不需要在 LINE 後台手動切圖與設定點擊範圍。
+
+1. 在 Render 的 Environment 加入一組管理密碼：
+
+```text
+RICH_MENU_SETUP_TOKEN=自行設定一組長一點的密碼
+```
+
+2. Render 重新部署完成後，用瀏覽器打開：
+
+```text
+https://你的後端網址/admin/setup-rich-menu?token=你的管理密碼
+```
+
+3. 回傳 `ok: true` 後，LINE 官方帳號的底部選單會建立成三格：
+
+- 選購顏料：開啟 LIFF 商店
+- 客服：傳送客服訊息
+- 付款說明：傳送付款說明訊息
+
 ## LIFF
 
 1. 在 LINE Login channel 新增 LIFF app。
@@ -82,4 +104,3 @@ http://127.0.0.1:8787/
 5. 系統建立訂單並導向 LINE Pay。
 6. 付款成功後，機器人傳送訂單確認。
 7. 客服在同一個 LINE 對話裡接續處理。
-

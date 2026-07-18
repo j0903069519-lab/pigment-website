@@ -115,6 +115,9 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/linepay/cancel":
             self.serve_message_page("付款已取消", "你的訂單尚未付款，可以回到 LINE 重新操作。")
             return
+        if parsed.path == "/admin/setup-rich-menu":
+            self.handle_setup_rich_menu(parsed)
+            return
         self.serve_static(parsed.path)
 
     def do_POST(self):
@@ -182,9 +185,37 @@ class Handler(BaseHTTPRequestHandler):
                 text = event["message"].get("text", "")
                 if "客服" in text:
                     line_bot.reply_text(event["replyToken"], "客服已收到訊息，我們會盡快回覆。")
+                elif "付款" in text:
+                    line_bot.reply_text(
+                        event["replyToken"],
+                        "付款說明\n\n目前 LINE Pay 串接入口已預留，正式收款資料開通後就能直接線上付款。\n\n"
+                        "現階段可先送出訂單，我們確認後會在 LINE 回覆付款方式。\n\n"
+                        "顏料：每包 $120 / 15克",
+                    )
+                elif "選購" in text or "下單" in text:
+                    if config.LINE_LIFF_ID:
+                        line_bot.reply_text(event["replyToken"], f"請點這裡開始選購：\nhttps://liff.line.me/{config.LINE_LIFF_ID}")
+                    else:
+                        line_bot.reply_text(event["replyToken"], "請點下方選單「選購顏料」開始下單。")
                 else:
                     line_bot.reply_text(event["replyToken"], "請點下方選單「選購顏料」開始下單，或輸入「客服」留下問題。")
         json_response(self, 200, {"ok": True})
+
+    def handle_setup_rich_menu(self, parsed):
+        params = parse_qs(parsed.query)
+        token = params.get("token", [""])[0]
+        if config.APP_ENV == "production":
+            if not config.RICH_MENU_SETUP_TOKEN:
+                json_response(self, 403, {"error": "請先在 Render 設定 RICH_MENU_SETUP_TOKEN"})
+                return
+            if not hmac.compare_digest(token, config.RICH_MENU_SETUP_TOKEN):
+                json_response(self, 403, {"error": "管理密碼不正確"})
+                return
+        try:
+            result = line_bot.setup_rich_menu()
+            json_response(self, 200, {"ok": True, **result})
+        except Exception as error:
+            json_response(self, 400, {"error": str(error)})
 
     def serve_static(self, path):
         clean_path = path.lstrip("/") or "index.html"
